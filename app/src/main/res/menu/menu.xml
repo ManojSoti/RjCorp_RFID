@@ -1,0 +1,17 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.example.book_rfid.Read">
+    <item
+        android:id="@+id/action_import_xlxs"
+        android:orderInCategory="100"
+        android:title="@string/action_import_xlxs"
+        app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_import_xls"
+        android:orderInCategory="100"
+        android:title="@string/action_import_xls"
+        android:visible="false"
+        app:showAsAction="never" />
+</menu>

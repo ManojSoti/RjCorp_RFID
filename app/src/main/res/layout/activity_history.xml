@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TotalTags"
+    android:stretchColumns="1"
+    android:orientation="vertical">
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="History"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:textSize="32sp"
+        android:gravity="center"
+        android:id="@+id/text"/>
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        app:cardCornerRadius="8dp"
+        app:cardElevation="4dp"
+       >
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:orientation="horizontal"
+        >
+
+        <TextView
+            android:text="Date"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:padding="3dip"
+            android:textSize="18sp"
+            android:textColor="@color/black"
+
+            android:gravity="center"/>
+        <View
+            android:layout_width="1dp"
+            android:layout_height="40dp"
+            android:background="@color/gray"
+            />
+        <ImageView
+            android:id="@+id/imagetag"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/qqq"
+
+            />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="40dp"
+            android:background="@color/gray"
+            />
+        <ImageView
+            android:id="@+id/imagetag2"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/tagblue"
+
+            />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="40dp"
+            android:background="@color/gray"
+            />
+        <ImageView
+            android:id="@+id/imagetag3"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/tagred1"
+
+            />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="40dp"
+            android:background="@color/gray"
+            />
+        <ImageView
+            android:id="@+id/imagetag4"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:src="@drawable/tagblack2"
+
+            />
+        <View
+            android:layout_width="1dp"
+            android:layout_height="40dp"
+            android:background="@color/gray"
+            />
+        <TextView
+            android:text="EXCEL"
+            android:layout_width="60dp"
+            android:layout_height="40dp"
+            android:padding="3dip"
+            android:textSize="18sp"
+            android:textColor="@color/black"
+            android:gravity="center"/>
+    </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <ListView
+        android:id="@+id/LvTags6"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"
+
+        />
+    <ImageView
+        android:id="@+id/empty_imageview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="230dp"
+        android:alpha="0.1"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_empty" />
+
+    <TextView
+        android:id="@+id/no_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="No Data."
+        android:textSize="20sp"
+        android:alpha="0.4"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/empty_imageview" />
+
+
+
+</LinearLayout>

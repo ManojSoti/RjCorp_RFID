@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".TotalTags"
+    android:stretchColumns="1"
+    android:orientation="vertical"
+    >
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Found Tags"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:textSize="28sp"
+        android:gravity="center"
+        android:id="@+id/text"/>
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        app:cardCornerRadius="5dp"
+        app:cardElevation="4dp"
+
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:orientation="horizontal"
+            android:paddingLeft="1dp"
+            android:paddingRight="1dp"
+            >
+            <TextView
+                android:text="EPC NO"
+                android:layout_width="225dp"
+                android:layout_height="40dp"
+                android:padding="3dip"
+                android:textSize="18sp"
+                android:textColor="@color/black"
+
+                android:background="@drawable/rectangelbg"
+                android:gravity="center"/>
+            <TextView
+                android:text="PROD.NAME"
+                android:layout_width="133dp"
+                android:layout_height="40dp"
+                android:textSize="18sp"
+                android:gravity="center"
+                android:textColor="@color/black"
+                android:background="@drawable/rectangelbg"
+                android:padding="3dip" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+    <ListView
+        android:id="@+id/LvTags2"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_marginTop="10dp"
+        android:layout_below="@+id/text"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"/>
+</TableLayout>

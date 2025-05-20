@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MissingTags"
+    android:stretchColumns="1"
+    android:orientation="vertical">
+
+
+    <LinearLayout
+        android:id="@+id/layout12"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="5dp">
+
+
+    <TextView
+        android:id="@+id/text"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Missings Tags"
+        android:textColor="@color/black"
+        android:textSize="28sp"
+        android:textStyle="bold"
+        tools:ignore="MissingConstraints" />
+
+        <TextView
+            android:id="@+id/export1"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="0.1"
+            android:background="@drawable/export"
+            android:textColor="#fff" />
+    </LinearLayout>
+
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            app:cardCornerRadius="5dp"
+            app:cardElevation="4dp"
+
+            >
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal"
+                android:paddingLeft="1dp"
+                android:paddingRight="1dp"
+                >
+                <TextView
+                    android:text="EPC NO"
+                    android:layout_width="225dp"
+                    android:layout_height="40dp"
+                    android:padding="3dip"
+                    android:textSize="18sp"
+                    android:textColor="@color/black"
+
+                    android:background="@drawable/rectangelbg"
+                    android:gravity="center"/>
+                <TextView
+                    android:text="PROD.NAME"
+                    android:layout_width="133dp"
+                    android:layout_height="40dp"
+                    android:textSize="18sp"
+                    android:gravity="center"
+                    android:textColor="@color/black"
+                    android:background="@drawable/rectangelbg"
+                    android:padding="3dip" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
+    <ListView
+        android:id="@+id/LvTags3"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_below="@+id/text"
+        android:layout_marginTop="10dp"
+        android:divider="@android:color/transparent"
+        android:dividerHeight="0dp"/>
+
+</TableLayout>
