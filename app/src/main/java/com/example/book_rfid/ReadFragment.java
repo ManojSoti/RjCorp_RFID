@@ -103,6 +103,7 @@ public class ReadFragment extends KeyDwonFragment {
     private List<String> tempDatas = new ArrayList<>();
     static Set<String> scan=new HashSet<>();
     static Set<String> unknown=new HashSet<>();
+    public static HashMap<String, ProductStatus> scannedStatusMap = new HashMap<>();
     int count1=0;
    private HashMap<String,String> readedvalue=new HashMap<String,String>();
     MyAdapter adapter;
@@ -652,59 +653,74 @@ public class ReadFragment extends KeyDwonFragment {
     private void addDataToList(String epc, String epcAndTidUser, String rssi) {
         if (StringUtils.isNotEmpty(epc)) {
             index = checkIsExist(epc);
-            map = new HashMap<String, String>();
+            map = new HashMap<>();
             map.put(TAG_EPC, epc);
             map.put(TAG_EPC_TID, epcAndTidUser);
             map.put(TAG_COUNT, String.valueOf(1));
             map.put(TAG_RSSI, rssi);
-            readedvalue.put(TAG_EPC_TID,epcAndTidUser);
-            String m=readedvalue.get(TAG_EPC_TID);
-            if (matchkeyvalueexcel.containsKey(m)){
-                Log.d("mmm",m);
-                scan.add(m+"                "+matchkeyvalueexcel.get(m));//do not press back space between the spaces and there shuld be equal number of spaces btw excel tag and scan tag
-            }else{
-                unknown.add(m);
+
+            readedvalue.put(TAG_EPC_TID, epcAndTidUser);
+            String matched = readedvalue.get(TAG_EPC_TID);
+
+            if (matchkeyvalueexcel.containsKey(matched)) {
+                Log.d("MatchedTag", matched);
+                scan.add(matched + "                " + matchkeyvalueexcel.get(matched)); // aligned format
+            } else {
+                unknown.add(matched);
             }
 
-
-            // map.putAll(map3);
             if (index == -1) {
-
-                // mContext.tagList.add(map);
-                // compareTags();
                 mContext.tagList.add(map);
-
                 Log.d("R", String.valueOf(map.get(TAG_EPC_TID)));
                 tempDatas.add(epc);
-
                 tv_count.setText(String.valueOf(adapter.getCount()));
             } else {
-
-                    int tagCount = Integer.parseInt(mContext.tagList.get(index).get(TAG_COUNT), 10) + 1;
-                    map.put(TAG_COUNT, String.valueOf(tagCount));
-                    map.put(TAG_EPC_TID, epcAndTidUser);
-
-
-
-                //  compareTags();
+                int tagCount = Integer.parseInt(mContext.tagList.get(index).get(TAG_COUNT), 10) + 1;
+                map.put(TAG_COUNT, String.valueOf(tagCount));
+                map.put(TAG_EPC_TID, epcAndTidUser);
                 mContext.tagList.set(index, map);
-
-                // mContext.tagList.set(index,map3);
             }
+
             tv_total.setText(String.valueOf(++total));
             adapter.notifyDataSetChanged();
 
-            //----------
             mContext.bookinfo.setTempDatas(tempDatas);
             Log.d("temp", tempDatas.toString());
             mContext.bookinfo.setTagList(mContext.tagList);
             Log.d("mcon", String.valueOf(mContext.tagList));
             mContext.bookinfo.setCount(total);
             mContext.bookinfo.setTagNumber(adapter.getCount());
+
+            // --- 🔽 NEW LOGIC: update scannedStatusMap ---
+            String baseProduct;
+            boolean isLeft = epc.endsWith("-L");
+            boolean isRight = epc.endsWith("-R");
+
+            if (isLeft || isRight) {
+                baseProduct = epc.substring(0, epc.length() - 2); // remove -L / -R
+            } else {
+                baseProduct = epc; // treat as BOX
+            }
+
+            ProductStatus status = scannedStatusMap.get(baseProduct);
+            if (status == null) {
+                status = new ProductStatus(baseProduct, false, false, false);
+            }
+
+            if (isLeft) {
+                status.isLeftFound = true;
+            } else if (isRight) {
+                status.isRightFound = true;
+            } else {
+                status.isBoxFound = true;
+            }
+
+            scannedStatusMap.put(baseProduct, status);
+            // --------------------------------------------
         }
 
-        mFoundTags.setText(""+scan.size());
-        mUnknownTags.setText(""+unknown.size());
+        mFoundTags.setText("" + scan.size());
+        mUnknownTags.setText("" + unknown.size());
     }
 
 

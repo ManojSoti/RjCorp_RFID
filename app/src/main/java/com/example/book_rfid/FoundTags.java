@@ -1,37 +1,71 @@
 package com.example.book_rfid;
 
-import static com.example.book_rfid.ReadFragment.excelTags;
 import static com.example.book_rfid.ReadFragment.scan;
-
-
-import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ListView;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import com.example.book_rfid.ReadFragment;
-import com.example.book_rfid.Adapter;
+
 public class FoundTags extends AppCompatActivity {
 
     Adapter4 adapter4;
-    List<String> list2;
+    List<ProductStatus> productStatusList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_found_tags);
 
-        @SuppressLint({"MissingInflatedId", "LocalSuppress"})
-        ListView Totalexceltags=(ListView) findViewById(R.id.LvTags2);
-        list2=new ArrayList<>(scan);
-        Log.d("list", String.valueOf(list2.size()));
-        adapter4=new Adapter4(this,list2);
-        Log.d("tags", String.valueOf(ReadFragment.excelTags.size()));
+        @SuppressLint("MissingInflatedId")
+        ListView listView = findViewById(R.id.LvTags2);
 
-        Totalexceltags.setAdapter(adapter4);
+        productStatusList = new ArrayList<>();
+        HashMap<String, ProductStatus> productMap = new HashMap<>();
+
+        for (String tag : scan) {
+            String baseProduct;
+            boolean isLeft = tag.endsWith("-L");
+            boolean isRight = tag.endsWith("-R");
+
+            if (isLeft || isRight) {
+                baseProduct = tag.substring(0, tag.length() - 2); // Remove "-L" or "-R"
+            } else {
+                baseProduct = tag; // BOX
+            }
+
+            ProductStatus status = productMap.get(baseProduct);
+            if (status == null) {
+                status = new ProductStatus(baseProduct, false, false, false);
+            }
+
+            if (isLeft) {
+                status.isLeftFound = true;
+            } else if (isRight) {
+                status.isRightFound = true;
+            } else {
+                status.isBoxFound = true;
+            }
+
+            productMap.put(baseProduct, status);
+        }
+
+        // Only add fully found sets
+        for (ProductStatus status : productMap.values()) {
+            if (status.isBoxFound && status.isLeftFound && status.isRightFound) {
+                productStatusList.add(status);
+            }
+        }
+
+        Log.d("ProductStatus", "Fully matched products: " + productStatusList.size());
+
+        adapter4 = new Adapter4(this, productStatusList);
+        listView.setAdapter(adapter4);
     }
 }
