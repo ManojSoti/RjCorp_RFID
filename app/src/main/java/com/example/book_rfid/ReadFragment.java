@@ -1403,8 +1403,19 @@ public class ReadFragment extends KeyDwonFragment {
         int partialCount = 0;
         int missingCount = 0;
 
-        Set<String> scannedSet = new HashSet<>(scan); // All scanned EPCs
         Set<String> knownEPCs = new HashSet<>();
+        for (ProductStatus product : productTagList) {
+            knownEPCs.add(product.boxEPC);
+            knownEPCs.add(product.leftEPC);
+            knownEPCs.add(product.rightEPC);
+        }
+
+        Set<String> scannedSet = new HashSet<>();
+        for (String tag : scan) {
+            if (knownEPCs.contains(tag)) {
+                scannedSet.add(tag);
+            }
+        }
 
         missingtags.clear();
         missingtagsobj.clear();
@@ -1418,11 +1429,6 @@ public class ReadFragment extends KeyDwonFragment {
             Log.d("compareTags", "Box EPC: " + product.boxEPC + " -> " + isBoxFound);
             Log.d("compareTags", "Left EPC: " + product.leftEPC + " -> " + isLeftFound);
             Log.d("compareTags", "Right EPC: " + product.rightEPC + " -> " + isRightFound);
-
-            // Track known EPCs for later comparison
-            knownEPCs.add(product.boxEPC);
-            knownEPCs.add(product.leftEPC);
-            knownEPCs.add(product.rightEPC);
 
             if (isBoxFound && isLeftFound && isRightFound) {
                 foundCount++;
@@ -1444,8 +1450,7 @@ public class ReadFragment extends KeyDwonFragment {
             }
         }
 
-        // Compute unknown tags
-        Set<String> unknownTags = new HashSet<>(scannedSet);
+        Set<String> unknownTags = new HashSet<>(scan);
         unknownTags.removeAll(knownEPCs); // Remove known tags
 
         Log.d("compareTags", "🧩 Unknown EPCs count: " + unknownTags.size());
