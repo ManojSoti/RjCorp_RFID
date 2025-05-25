@@ -1,6 +1,7 @@
 package com.example.book_rfid;
 
 import static com.example.book_rfid.ReadFragment.scan;
+import static com.example.book_rfid.ReadFragment.epcToTitleMap;
 
 import android.annotation.SuppressLint;
 import android.os.Bundle;
@@ -30,19 +31,26 @@ public class FoundTags extends AppCompatActivity {
         HashMap<String, ProductStatus> productMap = new HashMap<>();
 
         for (String tag : scan) {
-            String baseProduct;
+            String baseEpc;
             boolean isLeft = tag.endsWith("-L");
             boolean isRight = tag.endsWith("-R");
 
             if (isLeft || isRight) {
-                baseProduct = tag.substring(0, tag.length() - 2); // Remove "-L" or "-R"
+                baseEpc = tag.substring(0, tag.length() - 2); // Remove "-L" or "-R"
             } else {
-                baseProduct = tag; // BOX
+                baseEpc = tag; // BOX
             }
 
-            ProductStatus status = productMap.get(baseProduct);
+            // 🔽 Get product title using base EPC from map
+            String productTitle = epcToTitleMap.get(baseEpc);
+            if (productTitle == null) {
+                Log.d("FoundTags", "⚠️ No product title found for EPC: " + baseEpc);
+                continue; // skip unknown EPCs
+            }
+
+            ProductStatus status = productMap.get(baseEpc);
             if (status == null) {
-                status = new ProductStatus(baseProduct, false, false, false);
+                status = new ProductStatus(productTitle, false, false, false);
             }
 
             if (isLeft) {
@@ -53,17 +61,17 @@ public class FoundTags extends AppCompatActivity {
                 status.isBoxFound = true;
             }
 
-            productMap.put(baseProduct, status);
+            productMap.put(baseEpc, status);
         }
 
-        // Only add fully found sets
+        // ✅ Only add entries where all 3 parts (Box, Left, Right) were found
         for (ProductStatus status : productMap.values()) {
             if (status.isBoxFound && status.isLeftFound && status.isRightFound) {
                 productStatusList.add(status);
             }
         }
 
-        Log.d("ProductStatus", "Fully matched products: " + productStatusList.size());
+        Log.d("ProductStatus", "✅ Fully matched products: " + productStatusList.size());
 
         adapter4 = new Adapter4(this, productStatusList);
         listView.setAdapter(adapter4);

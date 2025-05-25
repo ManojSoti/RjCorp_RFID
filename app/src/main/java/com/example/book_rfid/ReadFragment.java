@@ -101,9 +101,11 @@ public class ReadFragment extends KeyDwonFragment {
     static Set<String> missingtags=new HashSet<>();
      static List<String> excelTags = new ArrayList<>();
     private List<String> tempDatas = new ArrayList<>();
-    static Set<String> scan=new HashSet<>();
+    public static List<String> scan = new ArrayList<>();
     static Set<String> unknown=new HashSet<>();
     public static HashMap<String, ProductStatus> scannedStatusMap = new HashMap<>();
+    List<ProductStatus> productTagList = new ArrayList<>();
+
     int count1=0;
    private HashMap<String,String> readedvalue=new HashMap<String,String>();
     MyAdapter adapter;
@@ -168,6 +170,10 @@ public class ReadFragment extends KeyDwonFragment {
     static List<String> history_missing=new LinkedList<>();
     static List<String> history_unknown=new LinkedList<>();
     static Set<String> dontallowduplicatedate=new LinkedHashSet<>();
+    // Add this as a class-level field
+    Map<String, ProductStatus> epcToProductStatusMap = new HashMap<>();
+   public static Map<String, String> epcToTitleMap = new HashMap<>();
+
 
     private SharedPreferences sharedPreferences;
     private Calendar previousDatee;
@@ -649,35 +655,54 @@ public class ReadFragment extends KeyDwonFragment {
         stopInventory();
     }
 
-
     private void addDataToList(String epc, String epcAndTidUser, String rssi) {
         if (StringUtils.isNotEmpty(epc)) {
-            index = checkIsExist(epc);
+            // Convert EPC from hex to text
+            String epcText = hexToAscii(epc);
+            String epcTidUserText = hexToAscii(epcAndTidUser); // Optional, only if epcAndTidUser is also hex
+
+            index = checkIsExist(epcText);  // Use decoded text for uniqueness
+
             map = new HashMap<>();
-            map.put(TAG_EPC, epc);
-            map.put(TAG_EPC_TID, epcAndTidUser);
-            map.put(TAG_COUNT, String.valueOf(1));
+            map.put(TAG_EPC, epcText);
+            map.put(TAG_EPC_TID, epcTidUserText);
+            map.put(TAG_COUNT, "1");
             map.put(TAG_RSSI, rssi);
 
-            readedvalue.put(TAG_EPC_TID, epcAndTidUser);
-            String matched = readedvalue.get(TAG_EPC_TID);
+            readedvalue.put(TAG_EPC_TID, epcTidUserText);
+            String scannedKeyHex = readedvalue.get(TAG_EPC_TID);
+            String scannedKeyAscii = hexToAscii(scannedKeyHex);
 
-            if (matchkeyvalueexcel.containsKey(matched)) {
-                Log.d("MatchedTag", matched);
-                scan.add(matched + "                " + matchkeyvalueexcel.get(matched)); // aligned format
-            } else {
-                unknown.add(matched);
+            String baseKey = scannedKeyAscii;
+            if (scannedKeyAscii.endsWith("-L") || scannedKeyAscii.endsWith("-R")) {
+                baseKey = scannedKeyAscii.substring(0, scannedKeyAscii.length() - 2);
             }
 
+            String title = matchkeyvalueexcel.get(baseKey);
+            if (title != null) {
+                String formatted = scannedKeyAscii + getSpacesForAlignment(scannedKeyAscii) + title;
+
+                if (!scan.contains(scannedKeyAscii)) {
+                    scan.add(scannedKeyAscii);  // ✅ Store only ASCII EPCs like "300000000001-L"
+                    Log.d("addDataToList", "✅ Added to scan: " + scannedKeyAscii);
+                }
+            } else {
+                if (!unknown.contains(scannedKeyAscii)) {
+                    unknown.add(scannedKeyAscii);
+                    Log.w("addDataToList", "❓ Unknown tag: " + scannedKeyAscii);
+                }
+            }
+
+
+            // Add to tagList if not exists
             if (index == -1) {
                 mContext.tagList.add(map);
-                Log.d("R", String.valueOf(map.get(TAG_EPC_TID)));
-                tempDatas.add(epc);
+                tempDatas.add(epcText);
                 tv_count.setText(String.valueOf(adapter.getCount()));
             } else {
                 int tagCount = Integer.parseInt(mContext.tagList.get(index).get(TAG_COUNT), 10) + 1;
                 map.put(TAG_COUNT, String.valueOf(tagCount));
-                map.put(TAG_EPC_TID, epcAndTidUser);
+                map.put(TAG_EPC_TID, epcTidUserText);
                 mContext.tagList.set(index, map);
             }
 
@@ -685,44 +710,38 @@ public class ReadFragment extends KeyDwonFragment {
             adapter.notifyDataSetChanged();
 
             mContext.bookinfo.setTempDatas(tempDatas);
-            Log.d("temp", tempDatas.toString());
             mContext.bookinfo.setTagList(mContext.tagList);
-            Log.d("mcon", String.valueOf(mContext.tagList));
             mContext.bookinfo.setCount(total);
             mContext.bookinfo.setTagNumber(adapter.getCount());
 
-            // --- 🔽 NEW LOGIC: update scannedStatusMap ---
-            String baseProduct;
-            boolean isLeft = epc.endsWith("-L");
-            boolean isRight = epc.endsWith("-R");
-
-            if (isLeft || isRight) {
-                baseProduct = epc.substring(0, epc.length() - 2); // remove -L / -R
-            } else {
-                baseProduct = epc; // treat as BOX
-            }
-
-            ProductStatus status = scannedStatusMap.get(baseProduct);
-            if (status == null) {
-                status = new ProductStatus(baseProduct, false, false, false);
-            }
-
-            if (isLeft) {
-                status.isLeftFound = true;
-            } else if (isRight) {
-                status.isRightFound = true;
-            } else {
-                status.isBoxFound = true;
-            }
-
-            scannedStatusMap.put(baseProduct, status);
-            // --------------------------------------------
+            mFoundTags.setText(String.valueOf(scan.size()));
+            mUnknownTags.setText(String.valueOf(unknown.size()));
         }
-
-        mFoundTags.setText("" + scan.size());
-        mUnknownTags.setText("" + unknown.size());
     }
 
+    private String hexToAscii(String hexStr) {
+        StringBuilder output = new StringBuilder();
+        for (int i = 0; i < hexStr.length(); i += 2) {
+            try {
+                String str = hexStr.substring(i, i + 2);
+                output.append((char) Integer.parseInt(str, 16));
+            } catch (Exception e) {
+                output.append('?'); // fallback for invalid hex
+            }
+        }
+        return output.toString().trim(); // trim to remove padding
+    }
+
+
+    // Helper: Pad with fixed spaces (e.g., 20 total characters before title)
+    private String getSpacesForAlignment(String tag) {
+        int totalLengthBeforeTitle = 30; // Adjust to your required spacing
+        int tagLength = tag.length();
+        int spacesNeeded = totalLengthBeforeTitle - tagLength;
+        if (spacesNeeded < 1) spacesNeeded = 1;
+
+        return new String(new char[spacesNeeded]).replace('\0', ' ');
+    }
 
     public class BtClearClickListener implements View.OnClickListener {
 
@@ -1261,142 +1280,113 @@ public class ReadFragment extends KeyDwonFragment {
     }
 
     @SuppressLint({"SuspiciousIndentation", "SetTextI18n"})
-    public void ReadExcelFile(Context context, Uri uri)  {
+    public void ReadExcelFile(Context context, Uri uri) {
         try {
+            Log.d("SOP", "Starting ReadExcelFile...");
+
             InputStream inStream;
             Workbook wb = null;
 
             try {
+                Log.d("SOP", "Opening input stream from URI...");
                 inStream = context.getContentResolver().openInputStream(uri);
 
-                if (fileType == extensionXLS)
-
-                wb = new XSSFWorkbook(inStream);
-
-                else
+                Log.d("SOP", "Checking file type...");
+                if (fileType == extensionXLS) {
+                    Log.d("SOP", "Detected XLS file.");
                     wb = new HSSFWorkbook(inStream);
+                } else {
+                    Log.d("SOP", "Detected XLSX file.");
+                    wb = new XSSFWorkbook(inStream);
+                }
+
                 inStream.close();
+                Log.d("SOP", "Input stream closed.");
             } catch (IOException e) {
-                //  lbl.setText("First " + e.getMessage().toString());
+                Log.e("SOP", "Error reading file: " + e.getMessage());
                 e.printStackTrace();
             }
-       // OPCPackage pkg = OPCPackage.open(new FileInputStream());
-       // String filePath = System.getProperty("user.home") + File.separator + "Documents" + File.separator + "MyExcel.xls";
-        //InputStream inStream;
-       // inStream = context.getContentResolver().openInputStream(uri);
-       /*     File sdCard = Environment.getExternalStorageDirectory();
-        //OPCPackage pkg = OPCPackage.open(new File("file.xlsx"));
-        String s= sdCard.getAbsolutePath()+"/cw/RFID DEMO";
-        InputStream pkg = new FileInputStream(s);
-       // Workbook wb1 = WorkbookFactory.create(new File(s));
-       // OPCPackage pkg = OPCPackage.open(new File("/storage/emulated/0/RFID DEMO.xlsx"));
-        XSSFWorkbook wb = new XSSFWorkbook( pkg);
-            XSSFSheet sheet1 = wb.getSheetAt(0);*/
 
-            Sheet sheet1 = wb.getSheetAt(0);
-            for (int i=1;i<=sheet1.getLastRowNum();i++){
-                Row row= sheet1.getRow(i);
-                String tag = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
-                String name = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
-                Log.d("row",tag+"-"+name);
-
-                excelTags.add(tag+"                "+name);
-                //E2801191A5030061EB73D04B
-                productnames.add(name);
-                matchkeyvalueexcel.put(tag,name);
-
-                Log.d("mi", String.valueOf(matchkeyvalueexcel.keySet()));
-
+            if (wb == null) {
+                Log.e("SOP", "Workbook is null. Exiting.");
+                return;
             }
 
-            /*for (Iterator<Row> rit = sheet1.rowIterator(); rit.hasNext(); ) {
-                Row row = rit.next();
+            Log.d("SOP", "Reading sheet 0...");
+            Sheet sheet1 = wb.getSheetAt(0);
 
+            productTagList = new ArrayList<>();
 
+            for (int i = 1; i <= sheet1.getLastRowNum(); i++) {
+                Row row = sheet1.getRow(i);
+                if (row == null) {
+                    Log.w("SOP", "Row " + i + " is null. Skipping.");
+                    continue;
+                }
 
+                Log.d("SOP", "Processing row " + i + "...");
 
-                String tagId = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue();
-                // System.out.println(name+"heyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy");
-                String name = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue();
-                Log.d("Mi",tagId+"       "+ name);
-                excelTags.add(tagId+"    "+name);
-                           //E2801191A5030061EB73D04B
-                productnames.add(name);
-                matchkeyvalueexcel.put(tagId,name);
+                String tag = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
+                String name = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
+                String boxEPC = row.getCell(2, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
+                String leftEPC = row.getCell(3, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
+                String rightEPC = row.getCell(4, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
 
-                Log.d("mi", String.valueOf(matchkeyvalueexcel.keySet()));
-                // tempDatas.add(name);
-                *//*map.put(TAG_EPC_TID,name);
-                mContext.tagList.add(index,map);*//*
-                //  str[count]=name;
-               // model m = new model(name);
+                Log.d("SOP", "Parsed: TAG=" + tag + ", Name=" + name + ", Box=" + boxEPC + ", Left=" + leftEPC + ", Right=" + rightEPC);
 
-                //Log.d("Mi",m.toString());
-                //String v = m.getName();
-               // map2.put(TAG_EPC_TID, m);
+                ProductStatus status = new ProductStatus(name, boxEPC, leftEPC, rightEPC);
+                productTagList.add(status);
 
-               // Log.d("Mit", String.valueOf(map2.get(TAG_EPC_TID)));
+                if (!boxEPC.isEmpty()) epcToTitleMap.put(boxEPC, name);
+                if (!leftEPC.isEmpty()) epcToTitleMap.put(leftEPC, name);
+                if (!rightEPC.isEmpty()) epcToTitleMap.put(rightEPC, name);
+            }
 
-               // mContext.tagList.add(map3);
-              //  mContext.model.setName(String.valueOf(m));
-               // Log.d("y", String.valueOf(map3.get(TAG_EPC_TID)));
+            Log.d("SOP", "Finished processing all rows.");
+            Log.d("SOP", "productTagList size: " + productTagList.size());
 
+            int count = productTagList.size();
+            mTotalTags.setText("" + count);
+            Log.d("SOP", "mTotalTags updated with count " + count);
 
-            }*/
-           // compareTags();
-           // LvTags.setAdapter(adapter2);
-
-            //notifyDataSetChanged();
-            int count=excelTags.size();
-            mTotalTags.setText(""+count);
-
-
-        }catch (Exception ex) {
-            Toast.makeText(mContext, "ReadExcelFile Error:" + ex.getMessage().toString(), Toast.LENGTH_SHORT).show();
+        } catch (Exception ex) {
+            Log.e("SOP", "Exception occurred during ReadExcelFile: " + ex.getMessage());
+            Toast.makeText(mContext, "ReadExcelFile Error: " + ex.getMessage(), Toast.LENGTH_SHORT).show();
             ex.printStackTrace();
         }
-}
+
+    }
 
 
 
 // create map only with epic
 
     private void compareTags() {
-    List<String> listA=new ArrayList<>(scan);
-        boolean tagfound=false;
-    for (int i=0;i<excelTags.size();i++){// excel tags
-        String item=excelTags.get(i);
-        Log.d("item", item);
-        int count=0;
-        for (int j=0;j<listA.size();j++) {// scan tags
-            String excelItem = listA.get(j);
-            Log.d("scan", excelItem);
-            Log.d("exc", item + "====" + excelItem);
-            if (item.equals(excelItem)) {
-                count++;
-               /* tagfound = true;
-                break;*/
+        int foundCount = 0;
+        int partialCount = 0;
+        int missingCount = 0;
+
+        Set<String> scannedSet = new HashSet<>(scan);  // scan contains scanned EPCs
+
+        for (ProductStatus product : productTagList) {
+            int matchCount = 0;
+
+            if (!TextUtils.isEmpty(product.boxEPC) && scannedSet.contains(product.boxEPC)) matchCount++;
+            if (!TextUtils.isEmpty(product.leftEPC) && scannedSet.contains(product.leftEPC)) matchCount++;
+            if (!TextUtils.isEmpty(product.rightEPC) && scannedSet.contains(product.rightEPC)) matchCount++;
+
+            if (matchCount == 3) {
+                foundCount++;
+            } else if (matchCount > 0) {
+                partialCount++;
+            } else {
+                missingCount++;
+                missingtags.add(product.productTitle + " [Box=" + product.boxEPC + ", Left=" + product.leftEPC + ", Right=" + product.rightEPC + "]");
             }
         }
-           if (count==0){
-               missingtags.add(item);
-               Log.d("misss",item);
-           }
 
-
-
-        /*if (tagfound){
-         continue;
-        }else
-        {
-
-        }*/
+        mFoundTags.setText(String.valueOf(foundCount));
+        mMissingTags.setText(String.valueOf(missingCount));
+        mUnknownTags.setText(String.valueOf(partialCount)); // used for partial
     }
- //   LvTags.setAdapter(adapter2);
-        Set<String> miss=new HashSet<String>(missingtags);
-        count1=miss.size();
-        mMissingTags.setText(""+count1);
-    }
-
-
 }
