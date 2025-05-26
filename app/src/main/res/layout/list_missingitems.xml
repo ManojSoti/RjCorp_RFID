@@ -1,93 +1,154 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="@color/graywhite"
-    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="8dp"
+    android:layout_marginBottom="8dp"
+    app:cardCornerRadius="8dp"
+    app:cardElevation="6dp"
+    android:padding="8dp"
+    android:background="@color/graywhite">
 
-    android:layout_marginTop="10dp">
-
-    <androidx.cardview.widget.CardView
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="40dp"
-        app:cardCornerRadius="5dp"
-        android:layout_marginBottom="10dp"
-        >
-        <ImageView
-            android:id="@+id/imagetagaa"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-            android:background="@color/text_gray"
-            />
-        <LinearLayout
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_margin="4dp"
-            >
-            <ImageView
-                android:id="@+id/imagetaga1"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:src="@drawable/wrong"
-                android:layout_marginTop="3dp"
-                android:layout_marginLeft="3dp"
-                android:layout_marginRight="3dp"
-                android:layout_marginBottom="3dp"
-                android:layout_gravity="center"
-                android:background="@color/graywhite"
-                />
-
-        </LinearLayout>
-
-        <View
-            android:layout_width="1dp"
-            android:layout_height="60dp"
-            android:background="@color/gray"
-            android:layout_gravity="center"
-            android:layout_marginLeft="46dp"
-            />
+        <!-- Title -->
         <TextView
-            android:id="@+id/TvTagUii4"
-            android:layout_width="340dp"
+            android:id="@+id/tvProductTitle"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginLeft="28dp"
-            android:padding="3dp"
-            android:text="12345678"
-            android:textSize="12dp"
-            android:textColor="@color/black"  />
+            android:text="NIKE-REV3-BLU-40"
+            android:textStyle="bold"
+            android:textSize="16sp"
+            android:textColor="@color/black"
+            android:paddingBottom="8dp" />
 
+        <!-- Sub Items List -->
+        <LinearLayout
+            android:id="@+id/llSubItems"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
-        <!-- <TextView
-             android:id="@+id/TvTagLen"
-             android:layout_width="0dip"
-             android:layout_height="wrap_content"
-             android:layout_weight="1" android:visibility="gone" />
+            <!-- Box Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp"
+                android:gravity="center_vertical">
 
-         <TextView
-             android:id="@+id/TvTagCount"
-             android:layout_width="0dip"
-             android:layout_height="wrap_content"
-             android:layout_weight="1"
-             android:paddingTop="3dp"
-             android:paddingBottom="2dp" />
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_shoe_box" />
 
-         <TextView
-             android:id="@+id/TvTagRssi"
-             android:layout_width="0dip"
-             android:layout_height="wrap_content"
-             android:layout_weight="1"
-             android:paddingTop="3dp"
-             android:paddingBottom="2dp" />-->
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Box"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
 
-    </androidx.cardview.widget.CardView>
+                <ImageView
+                    android:id="@+id/ivBoxNotFound"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_wrong_circle"
+                    app:tint="@android:color/holo_red_dark" />
 
+                <TextView
+                    android:id="@+id/tvBoxNotFound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Not Found"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/holo_red_dark" />
+            </LinearLayout>
 
+            <!-- Left Shoe Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp"
+                android:gravity="center_vertical">
 
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_left_shoe" />
 
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Left Shoe"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
 
+                <ImageView
+                    android:id="@+id/ivLeftNotFound"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_wrong_circle"
+                    app:tint="@android:color/holo_red_dark" />
 
+                <TextView
+                    android:id="@+id/tvLeftNotFound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Not Found"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/holo_red_dark" />
+            </LinearLayout>
 
-</LinearLayout>
+            <!-- Right Shoe Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingVertical="4dp"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_right_shoe" />
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Right Shoe"
+                    android:textSize="14sp"
+                    android:textColor="@color/black" />
+
+                <ImageView
+                    android:id="@+id/ivRightNotFound"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_wrong_circle"
+                    app:tint="@android:color/holo_red_dark" />
+
+                <TextView
+                    android:id="@+id/tvRightNotFound"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="Not Found"
+                    android:textSize="14sp"
+                    android:textColor="@android:color/holo_red_dark" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

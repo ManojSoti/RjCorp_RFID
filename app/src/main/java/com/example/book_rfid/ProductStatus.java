@@ -2,6 +2,39 @@ package com.example.book_rfid;
 
 public class ProductStatus {
     public String productTitle;
+
+    public String getProductTitle() {
+        return productTitle;
+    }
+
+    public void setProductTitle(String productTitle) {
+        this.productTitle = productTitle;
+    }
+
+    public String getBoxEPC() {
+        return boxEPC;
+    }
+
+    public void setBoxEPC(String boxEPC) {
+        this.boxEPC = boxEPC;
+    }
+
+    public String getLeftEPC() {
+        return leftEPC;
+    }
+
+    public void setLeftEPC(String leftEPC) {
+        this.leftEPC = leftEPC;
+    }
+
+    public String getRightEPC() {
+        return rightEPC;
+    }
+
+    public void setRightEPC(String rightEPC) {
+        this.rightEPC = rightEPC;
+    }
+
     public String boxEPC;
     public String leftEPC;
     public String rightEPC;

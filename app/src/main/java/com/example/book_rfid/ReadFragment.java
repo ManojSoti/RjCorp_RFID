@@ -1,7 +1,17 @@
 package com.example.book_rfid;
 
 
+import static org.apache.poi.ss.usermodel.DataValidationConstraint.ValidationType.FORMULA;
+import static org.apache.xmlbeans.impl.piccolo.xml.Piccolo.STRING;
+import static java.sql.Types.BOOLEAN;
+import static java.sql.Types.NUMERIC;
 import static jxl.Workbook.createWorkbook;
+import static jxl.biff.Type.BLANK;
+
+
+import org.apache.poi.ss.usermodel.CellType;
+import java.math.BigDecimal;
+
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -52,6 +62,7 @@ import com.rscja.team.qcom.deviceapi.S;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellType;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -66,6 +77,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.math.BigDecimal;
 import java.security.KeyStore;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -98,11 +110,12 @@ public class ReadFragment extends KeyDwonFragment {
     private boolean loopFlag = false;
     private int inventoryFlag = 1;
     private ArrayList<HashMap<String, String>> tagList;
-    static Set<String> missingtags=new HashSet<>();
+    public static List<String> missingtags= new ArrayList<>();
+    public static List<ProductStatus> missingtagsobj = new ArrayList<>();
      static List<String> excelTags = new ArrayList<>();
     private List<String> tempDatas = new ArrayList<>();
     public static List<String> scan = new ArrayList<>();
-    static Set<String> unknown=new HashSet<>();
+    public static List<String> unknown=new ArrayList<>();
     public static HashMap<String, ProductStatus> scannedStatusMap = new HashMap<>();
     List<ProductStatus> productTagList = new ArrayList<>();
 
@@ -120,7 +133,7 @@ public class ReadFragment extends KeyDwonFragment {
 
 
     ImageView imagetag;
-    CardView totalCard,foundCard,missingCard,unknownCard,historyCard;
+    CardView totalCard,foundCard,missingCard,PartialCard,historyCard;
     Button BtInventory, export;
     ListView LvTags;
     private static Read mContext;
@@ -146,7 +159,7 @@ public class ReadFragment extends KeyDwonFragment {
     private static String extensionXLS = "XLS";//
     private static String extensionXLSX = "XLSX";//
     int index = 0;
-    TextView mTotalTags,mFoundTags,mMissingTags,mUnknownTags;
+    public static TextView mTotalTags,mFoundTags,mMissingTags,mPartialTags;
 
 
     private SimpleDateFormat mDateFormat3 = new SimpleDateFormat("dd-MM");
@@ -226,12 +239,12 @@ public class ReadFragment extends KeyDwonFragment {
         mTotalTags=(TextView)getView().findViewById(R.id.totalTags);
         mFoundTags=(TextView)getView().findViewById(R.id.foundTags);
         mMissingTags=(TextView)getView().findViewById(R.id.missingtags);
-        mUnknownTags=(TextView)getView().findViewById(R.id.unknownTags);
+        mPartialTags=(TextView)getView().findViewById(R.id.PartialTags);
 
         totalCard=(CardView)getView().findViewById(R.id.card1);
         foundCard=(CardView)getView().findViewById(R.id.card2);
         missingCard=(CardView)getView().findViewById(R.id.card3);
-        unknownCard=(CardView)getView().findViewById(R.id.card4);
+        PartialCard=(CardView)getView().findViewById(R.id.card4);
         historyCard=(CardView)getView().findViewById(R.id.card5);
         imagetag=(ImageView)getView().findViewById(R.id.imagetag);
         imagetag.setImageResource(R.drawable.qqq);
@@ -286,7 +299,7 @@ public class ReadFragment extends KeyDwonFragment {
             }
         });
 
-        unknownCard.setOnClickListener(new View.OnClickListener() {
+        PartialCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent i=new Intent(getActivity(),UnknownTags.class);
@@ -657,11 +670,18 @@ public class ReadFragment extends KeyDwonFragment {
 
     private void addDataToList(String epc, String epcAndTidUser, String rssi) {
         if (StringUtils.isNotEmpty(epc)) {
+
+            // 🔹 Log the raw hex EPC
+            Log.d("addDataToList", "Raw EPC (hex): " + epc);
+
             // Convert EPC from hex to text
             String epcText = hexToAscii(epc);
-            String epcTidUserText = hexToAscii(epcAndTidUser); // Optional, only if epcAndTidUser is also hex
+            Log.d("addDataToList", "Converted EPC (ASCII): " + epcText);
 
-            index = checkIsExist(epcText);  // Use decoded text for uniqueness
+            // Convert full EPC + TID/User data from hex to ASCII
+            String epcTidUserText = hexToAscii(epcAndTidUser);
+
+            index = checkIsExist(epcText);  // Use decoded EPC text to check uniqueness
 
             map = new HashMap<>();
             map.put(TAG_EPC, epcText);
@@ -670,31 +690,27 @@ public class ReadFragment extends KeyDwonFragment {
             map.put(TAG_RSSI, rssi);
 
             readedvalue.put(TAG_EPC_TID, epcTidUserText);
-            String scannedKeyHex = readedvalue.get(TAG_EPC_TID);
-            String scannedKeyAscii = hexToAscii(scannedKeyHex);
+            String scannedKeyAscii = epcTidUserText;
 
+            // Normalize key if it ends in -L or -R (optional — still useful for duplicates)
             String baseKey = scannedKeyAscii;
             if (scannedKeyAscii.endsWith("-L") || scannedKeyAscii.endsWith("-R")) {
                 baseKey = scannedKeyAscii.substring(0, scannedKeyAscii.length() - 2);
             }
 
-            String title = matchkeyvalueexcel.get(baseKey);
-            if (title != null) {
-                String formatted = scannedKeyAscii + getSpacesForAlignment(scannedKeyAscii) + title;
-
-                if (!scan.contains(scannedKeyAscii)) {
-                    scan.add(scannedKeyAscii);  // ✅ Store only ASCII EPCs like "300000000001-L"
-                    Log.d("addDataToList", "✅ Added to scan: " + scannedKeyAscii);
-                }
-            } else {
-                if (!unknown.contains(scannedKeyAscii)) {
-                    unknown.add(scannedKeyAscii);
-                    Log.w("addDataToList", "❓ Unknown tag: " + scannedKeyAscii);
-                }
+            // Just store scanned tags without matching with title
+            if (!scan.contains(scannedKeyAscii)) {
+                scan.add(scannedKeyAscii);
+                Log.d("addDataToList", "✅ Added to scan: " + scannedKeyAscii);
             }
 
+            // If it's truly unknown (i.e. not scanned before), track it
+            if (!unknown.contains(scannedKeyAscii)) {
+                unknown.add(scannedKeyAscii);
+                Log.w("addDataToList", "❓ Unknown tag (just for record): " + scannedKeyAscii);
+            }
 
-            // Add to tagList if not exists
+            // Add to tagList if not already exists
             if (index == -1) {
                 mContext.tagList.add(map);
                 tempDatas.add(epcText);
@@ -706,6 +722,7 @@ public class ReadFragment extends KeyDwonFragment {
                 mContext.tagList.set(index, map);
             }
 
+            // Update totals and refresh UI
             tv_total.setText(String.valueOf(++total));
             adapter.notifyDataSetChanged();
 
@@ -715,7 +732,7 @@ public class ReadFragment extends KeyDwonFragment {
             mContext.bookinfo.setTagNumber(adapter.getCount());
 
             mFoundTags.setText(String.valueOf(scan.size()));
-            mUnknownTags.setText(String.valueOf(unknown.size()));
+            mPartialTags.setText(String.valueOf(unknown.size()));
         }
     }
 
@@ -768,7 +785,7 @@ public class ReadFragment extends KeyDwonFragment {
         mTotalTags.setText(""+0);
         mFoundTags.setText(""+0);
         mMissingTags.setText(""+0);
-        mUnknownTags.setText(""+0);
+        mPartialTags.setText(""+0);
         excelTags.clear();
         scan.clear();
         missingtags.clear();
@@ -842,7 +859,7 @@ public class ReadFragment extends KeyDwonFragment {
 
                         mFoundTags.setText(""+0);
                         mMissingTags.setText(""+0);
-                        mUnknownTags.setText(""+0);
+                        mPartialTags.setText(""+0);
                         BtInventory.setText(mContext.getString(R.string.title_stop_Inventory));
 
                         loopFlag = true;
@@ -1328,9 +1345,9 @@ public class ReadFragment extends KeyDwonFragment {
 
                 String tag = row.getCell(0, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
                 String name = row.getCell(1, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
-                String boxEPC = row.getCell(2, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
-                String leftEPC = row.getCell(3, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
-                String rightEPC = row.getCell(4, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK).getStringCellValue().trim();
+                String boxEPC = getCellAsString(row.getCell(2));
+                String leftEPC = getCellAsString(row.getCell(3));
+                String rightEPC = getCellAsString(row.getCell(4));
 
                 Log.d("SOP", "Parsed: TAG=" + tag + ", Name=" + name + ", Box=" + boxEPC + ", Left=" + leftEPC + ", Right=" + rightEPC);
 
@@ -1357,6 +1374,26 @@ public class ReadFragment extends KeyDwonFragment {
 
     }
 
+    private String getCellAsString(Cell cell) {
+        if (cell == null) return "";
+
+        CellType cellType = CellType.forInt(cell.getCellType());
+
+        switch (cellType) {
+            case STRING:
+                return cell.getStringCellValue().trim();
+            case NUMERIC:
+                return BigDecimal.valueOf(cell.getNumericCellValue()).toPlainString().trim();
+            case BOOLEAN:
+                return String.valueOf(cell.getBooleanCellValue()).trim();
+            case FORMULA:
+                return cell.getCellFormula().trim();
+            case BLANK:
+            default:
+                return "";
+        }
+    }
+
 
 
 // create map only with epic
@@ -1366,27 +1403,62 @@ public class ReadFragment extends KeyDwonFragment {
         int partialCount = 0;
         int missingCount = 0;
 
-        Set<String> scannedSet = new HashSet<>(scan);  // scan contains scanned EPCs
+        Set<String> scannedSet = new HashSet<>(scan); // All scanned EPCs
+        Set<String> knownEPCs = new HashSet<>();
+
+        missingtags.clear();
+        missingtagsobj.clear();
 
         for (ProductStatus product : productTagList) {
-            int matchCount = 0;
+            boolean isBoxFound = scannedSet.contains(product.boxEPC);
+            boolean isLeftFound = scannedSet.contains(product.leftEPC);
+            boolean isRightFound = scannedSet.contains(product.rightEPC);
 
-            if (!TextUtils.isEmpty(product.boxEPC) && scannedSet.contains(product.boxEPC)) matchCount++;
-            if (!TextUtils.isEmpty(product.leftEPC) && scannedSet.contains(product.leftEPC)) matchCount++;
-            if (!TextUtils.isEmpty(product.rightEPC) && scannedSet.contains(product.rightEPC)) matchCount++;
+            Log.d("compareTags", "🔎 Checking: " + product.productTitle);
+            Log.d("compareTags", "Box EPC: " + product.boxEPC + " -> " + isBoxFound);
+            Log.d("compareTags", "Left EPC: " + product.leftEPC + " -> " + isLeftFound);
+            Log.d("compareTags", "Right EPC: " + product.rightEPC + " -> " + isRightFound);
 
-            if (matchCount == 3) {
+            // Track known EPCs for later comparison
+            knownEPCs.add(product.boxEPC);
+            knownEPCs.add(product.leftEPC);
+            knownEPCs.add(product.rightEPC);
+
+            if (isBoxFound && isLeftFound && isRightFound) {
                 foundCount++;
-            } else if (matchCount > 0) {
-                partialCount++;
             } else {
-                missingCount++;
-                missingtags.add(product.productTitle + " [Box=" + product.boxEPC + ", Left=" + product.leftEPC + ", Right=" + product.rightEPC + "]");
+                ProductStatus status = new ProductStatus(
+                        product.productTitle, isBoxFound, isLeftFound, isRightFound
+                );
+                status.boxEPC = product.boxEPC;
+                status.leftEPC = product.leftEPC;
+                status.rightEPC = product.rightEPC;
+
+                if (!isBoxFound && !isLeftFound && !isRightFound) {
+                    missingtagsobj.add(status);
+                    Log.d("compareTags", "➕ Added to missingtagsobj: " + product.productTitle);
+                    missingCount++;
+                } else {
+                    partialCount++;
+                }
             }
         }
 
+        // Compute unknown tags
+        Set<String> unknownTags = new HashSet<>(scannedSet);
+        unknownTags.removeAll(knownEPCs); // Remove known tags
+
+        Log.d("compareTags", "🧩 Unknown EPCs count: " + unknownTags.size());
+        for (String unknown : unknownTags) {
+            Log.d("compareTags", "❓ Unknown Tag: " + unknown);
+        }
+
+        // Optional: show unknown tag count in UI (if you have a TextView)
+        // mUnknownTags.setText(String.valueOf(unknownTags.size()));
+
+        // Show known results in UI
         mFoundTags.setText(String.valueOf(foundCount));
         mMissingTags.setText(String.valueOf(missingCount));
-        mUnknownTags.setText(String.valueOf(partialCount)); // used for partial
+        mPartialTags.setText(String.valueOf(partialCount));
     }
 }

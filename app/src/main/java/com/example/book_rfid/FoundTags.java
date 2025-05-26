@@ -75,5 +75,10 @@ public class FoundTags extends AppCompatActivity {
 
         adapter4 = new Adapter4(this, productStatusList);
         listView.setAdapter(adapter4);
+
+//        if (ReadFragment.mFoundTags != null) {
+//            ReadFragment.mFoundTags.setText(productStatusList.size());
+//        }
+
     }
 }
